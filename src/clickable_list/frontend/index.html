@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>clickable-list</title>
+  <script src="./streamlit-component-lib.js"></script>
+  <script src="./main.js"></script>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<div id="root"></div>
+<script>
+  (function() {
+    function renderComponent(data) {
+      const output = document.getElementById("root");
+      output.innerHTML = "";  // Verhindert doppeltes Rendern
+      if (!data || !data.options) return;
+
+      data.options.forEach((item) => {
+        let node = document.createElement("p");
+        node.id = item.id;
+        node.innerHTML = item.name;
+        node.style.marginLeft = `${item.level * data.indent}px`;
+        if (item.style) {
+          node.style.cssText = item.style;
+        }
+        node.addEventListener("click", () => {
+          Streamlit.setComponentValue(item.id);
+        });
+
+        output.appendChild(node);
+      });
+    }
+
+    window.addEventListener("message", (event) => {
+      const data = event.data.args;
+      if (data) renderComponent(data);
+    });
+
+    Streamlit.setComponentReady(); // Zeigt an, dass die Komponente bereit ist
+    Streamlit.setFrameHeight();  // Setzt die richtige Höhe des iFrames
+  })();
+</script>
+</body>
+</html>
