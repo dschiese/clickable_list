@@ -14,9 +14,11 @@
 <script>
   (function() {
     function renderComponent(data) {
+      if (!data || !data.options) return;
+
+      let height = data.options.length * 50; // Höhe basierend auf der Anzahl der Elemente
       const output = document.getElementById("root");
       output.innerHTML = "";  // Verhindert doppeltes Rendern
-      if (!data || !data.options) return;
 
       data.options.forEach((item) => {
         let node = document.createElement("p");
@@ -32,6 +34,8 @@
 
         output.appendChild(node);
       });
+
+      Streamlit.setFrameHeight(height); // Höhe nach dem Rendern setzen
     }
 
     window.addEventListener("message", (event) => {
@@ -40,7 +44,6 @@
     });
 
     Streamlit.setComponentReady(); // Zeigt an, dass die Komponente bereit ist
-    Streamlit.setFrameHeight();  // Setzt die richtige Höhe des iFrames
   })();
 </script>
 </body>

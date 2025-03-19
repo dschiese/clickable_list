@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 frontend_dir = (Path(__file__).parent / "frontend").absolute()
 _component_func = components.declare_component("clickable_list", path=str(frontend_dir))
 
-def clickable_list(options: List[Dict[str, int]], indent=5 , style=None, key: Optional[str] = None):
+def clickable_list(options: List[Dict[str, int]], indent=20 , style=None, key: Optional[str] = None):
     """
     Erstellt eine klickbare Liste in Streamlit.
 
