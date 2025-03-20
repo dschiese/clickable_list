@@ -25,8 +25,8 @@
         node.id = item.id;
         node.innerHTML = item.name;
         node.style.marginLeft = `${item.level * data.indent}px`;
-        if (item.style) {
-          node.style.cssText = item.style;
+        if (data.style) {
+          node.style.cssText = data.style;
         }
         node.addEventListener("click", () => {
           Streamlit.setComponentValue(item.id);

@@ -10,6 +10,7 @@ def clickable_list(
     options: List[Dict[str, any]],
     indent: int = 10,
     key: Optional[str] = None,
+    style: Optional[str] = None,
     on_change: Optional[callable] = None,
     args: Optional[tuple] = (),
     kwargs: Optional[dict] = None
@@ -26,7 +27,8 @@ def clickable_list(
     component_value = _component_func(
         options=options,
         indent=indent,
-        key=key
+        key=key,
+        style=style
     )
 
     # Handle on_change callback if defined
