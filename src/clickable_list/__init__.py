@@ -16,13 +16,22 @@ def clickable_list(
     kwargs: Optional[dict] = None
 ) -> Optional[str]:
     """
-    Erstellt eine klickbare Liste in Streamlit.
+    Creates a clickable list in Streamlit.
 
-    :param options: Eine Liste von Dictionaries mit { "id": int, "name": str, "level": int }
-    :param indent: Der Multiplikator des Levels, left-margin in px.
-    :param style: CSS Style für Items
-    :param key: Optionaler Streamlit Key
-    :return: Die ID des geklickten Items
+    Parameters:
+        options (List[Dict]): A list of dictionaries with { "id": any, "name": str, "level": int }.
+                             - id: Unique identifier for the item
+                             - name: Display text for the item
+                             - level: Indentation level (0 for root, 1+ for nested items)
+        indent (int): The level-wise indent left-margin in pixels. Default is 10.
+        key (str, optional): A unique key for the component. Useful when using multiple instances.
+        style (str, optional): CSS style string to apply to list items.
+        on_change (callable, optional): Function to call when a list item is clicked.
+        args (tuple, optional): Additional arguments to pass to on_change.
+        kwargs (dict, optional): Additional keyword arguments to pass to on_change.
+    
+    Returns:
+        Optional[str]: The ID of the clicked item or None if no item was clicked.
     """
     component_value = _component_func(
         options=options,

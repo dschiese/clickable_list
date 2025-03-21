@@ -1,3 +1,4 @@
+# Example
 import streamlit as st
 from clickable_list import clickable_list
 
@@ -7,6 +8,6 @@ example_options = [
         {"id": 3, "name": "Method C", "level": 2},
 ]
 
-response = clickable_list(example_options, indent=20)
+response = clickable_list(example_options, indent=20, style="font-family: 'sans serif';")
 
 st.write(response)
