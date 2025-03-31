@@ -14,7 +14,8 @@ function createListNode(item, options, index, indent, style) {
   
   // Set properties
   node.id = item.id;
-  node.innerHTML = item.name;
+  node.innerHTML = (index != 0 ? "<b>L </b>" : "") + item.name;
+
   
   // Apply indentation for nested items
   if (item.level > 0) {
