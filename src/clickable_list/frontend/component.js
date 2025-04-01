@@ -14,9 +14,31 @@ function createListNode(item, options, index, indent, style) {
   
   // Set properties
   node.id = item.id;
-  node.innerHTML = (index != 0 ? "<b>L </b>" : "") + item.name;
-
   
+  // Determine hierarchy symbol for children
+  let hierarchySymbol = "";
+  if (item.level > 0) {
+    // Check if this is the last item at this level within its parent
+    let isLastChild = true;
+    for (let i = index + 1; i < options.length; i++) {
+      if (options[i].level < item.level) {
+        // We've gone back up the hierarchy, so stop checking
+        break;
+      }
+      
+      if (options[i].level === item.level) {
+        isLastChild = false;
+        break;
+      }
+    }
+    
+    hierarchySymbol = isLastChild ? "┕ " : "┝ ";
+  }
+  
+  // Make sure item.name is always included, even for single children
+  const displayName = item.name || "";
+  node.innerHTML = hierarchySymbol + displayName;
+
   // Apply indentation for nested items
   if (item.level > 0) {
     node.style.marginLeft = `${indent}px`;
