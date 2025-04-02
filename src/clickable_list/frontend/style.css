@@ -12,6 +12,10 @@ li, ul {
   display: none !important;
 }
 
+.collapsed {
+  background-color: antiquewhite;
+}
+
 .collapsible > li {
   display: block;
 }

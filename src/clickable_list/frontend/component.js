@@ -1,3 +1,7 @@
+// Add state management at the top of the file
+// This will persist between re-renders
+let collapsedNodes = new Set();
+
 /**
  * Creates a list node (li or ul) based on item properties
  * @param {Object} item - The item dictionary 
@@ -15,6 +19,13 @@ function createListNode(item, options, index, indent, style) {
   // Add collapsible class if node is a parent node
   if (isParentNode) {
     node.classList.add("collapsible");
+    
+    // Check if this node was previously collapsed
+    // Use a combination of id and name to create a unique identifier
+    const nodeId = `${item.id || ''}-${item.name || ''}-${item.level}`;
+    if (collapsedNodes.has(nodeId)) {
+      node.classList.add("collapsed");
+    }
   }
   
   // Set id for the node
@@ -52,23 +63,34 @@ function createListNode(item, options, index, indent, style) {
   if (hierarchySymbol) {
     const symbolSpan = document.createElement("span");
     symbolSpan.className = "hierarchy-symbol";
-    symbolSpan.textContent = hierarchySymbol;
     
+    // Add collapse indicator for parent nodes
     if (isParentNode) {
-      // Make the symbol clickable for collapsing if it's a parent node
+      const isCollapsed = collapsedNodes.has(`${item.id || ''}-${item.name || ''}-${item.level}`);
+      symbolSpan.textContent = hierarchySymbol;
+      symbolSpan.style.cursor = "pointer";
+      
       // Add click handler for collapsing
       symbolSpan.addEventListener("click", (e) => {
         e.stopPropagation();
-        node.classList.toggle("collapsed");
+        const nodeId = `${item.id || ''}-${item.name || ''}-${item.level}`;
         
-        // Change symbol when collapsed
         if (node.classList.contains("collapsed")) {
-          symbolSpan.style.color = "blue";
+          // Uncollapse
+          node.classList.remove("collapsed");
+          collapsedNodes.delete(nodeId);
+          symbolSpan.textContent = hierarchySymbol;
         } else {
-          symbolSpan.style.color = "black";
+          // Collapse
+          node.classList.add("collapsed");
+          collapsedNodes.add(nodeId);
+          symbolSpan.textContent = hierarchySymbol;
         }
       });
+    } else {
+      symbolSpan.textContent = hierarchySymbol;
     }
+    
     contentContainer.appendChild(symbolSpan);
   }
   
@@ -80,7 +102,12 @@ function createListNode(item, options, index, indent, style) {
   // Attach the click handler to just the name span
   nameSpan.addEventListener("click", (e) => {
     e.stopPropagation();
-    Streamlit.setComponentValue(item);
+    // When clicking on the name, preserve the current state of collapsed nodes
+    const state = {
+      ...item,
+      collapsedState: Array.from(collapsedNodes)
+    };
+    Streamlit.setComponentValue(state);
   });
   
   contentContainer.appendChild(nameSpan);
@@ -97,17 +124,6 @@ function createListNode(item, options, index, indent, style) {
   }
   
   return node;
-}
-
-/**
- * Attaches click handler to a node
- * @param {HTMLElement} node - The DOM node
- * @param {Object} item - The item data to return on click
- */
-function attachClickHandler(node, item) {
-  // This function is now obsolete since we're attaching the click handler
-  // directly to the name span in createListNode
-  // We keep it for compatibility but it doesn't do anything
 }
 
 /**
@@ -189,9 +205,6 @@ function renderComponent(data) {
     // Create the appropriate node
     const node = createListNode(item, data.options, i, data.indent, data.style);
     
-    // Attach click handler
-    attachClickHandler(node, item);
-    
     // Append to the current parent in the stack
     parentStack[parentStack.length - 1].appendChild(node);
     
@@ -210,7 +223,13 @@ function renderComponent(data) {
 function initComponent() {
   window.addEventListener("message", (event) => {
     const data = event.data.args;
-    if (data) renderComponent(data);
+    if (data) {
+      // Restore the collapsed state if available
+      if (data.collapsedState) {
+        collapsedNodes = new Set(data.collapsedState);
+      }
+      renderComponent(data);
+    }
   });
 
   Streamlit.setComponentReady();
