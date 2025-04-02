@@ -1,8 +1,8 @@
 /**
  * Creates a list node (li or ul) based on item properties
- * @param {Object} item - The item data 
+ * @param {Object} item - The item dictionary 
  * @param {Array} options - All options array for context
- * @param {number} index - Current item index
+ * @param {number} index - Current options index
  * @param {number} indent - Indentation in pixels
  * @param {string} style - CSS style to apply
  * @returns {HTMLElement} The created DOM node
@@ -12,8 +12,21 @@ function createListNode(item, options, index, indent, style) {
   const isParentNode = index < options.length - 1 && options[index + 1].level > item.level;
   const node = document.createElement(isParentNode ? "ul" : "li");
   
-  // Set properties
+  // Add collapsible class if node is a parent node
+  if (isParentNode) {
+    node.classList.add("collapsible");
+  }
+  
+  // Set id for the node
   node.id = item.id;
+  
+  // Clear any existing content
+  node.innerHTML = "";
+  
+  // Create container for the node content
+  const contentContainer = document.createElement("div");
+  contentContainer.style.display = "flex";
+  contentContainer.style.alignItems = "center";
   
   // Determine hierarchy symbol for children
   let hierarchySymbol = "";
@@ -35,9 +48,43 @@ function createListNode(item, options, index, indent, style) {
     hierarchySymbol = isLastChild ? "┕ " : "┝ ";
   }
   
-  // Make sure item.name is always included, even for single children
-  const displayName = item.name || "";
-  node.innerHTML = hierarchySymbol + displayName;
+  // Create non-clickable span for hierarchy symbol
+  if (hierarchySymbol) {
+    const symbolSpan = document.createElement("span");
+    symbolSpan.className = "hierarchy-symbol";
+    symbolSpan.textContent = hierarchySymbol;
+    
+    if (isParentNode) {
+      // Make the symbol clickable for collapsing if it's a parent node
+      // Add click handler for collapsing
+      symbolSpan.addEventListener("click", (e) => {
+        e.stopPropagation();
+        node.classList.toggle("collapsed");
+        
+        // Change symbol when collapsed
+        if (node.classList.contains("collapsed")) {
+          symbolSpan.style.color = "blue";
+        } else {
+          symbolSpan.style.color = "black";
+        }
+      });
+    }
+    contentContainer.appendChild(symbolSpan);
+  }
+  
+  // Create clickable span for the item name
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = item.name;
+  nameSpan.classList.add("clickable-text");
+  
+  // Attach the click handler to just the name span
+  nameSpan.addEventListener("click", (e) => {
+    e.stopPropagation();
+    Streamlit.setComponentValue(item);
+  });
+  
+  contentContainer.appendChild(nameSpan);
+  node.appendChild(contentContainer);
 
   // Apply indentation for nested items
   if (item.level > 0) {
@@ -58,10 +105,9 @@ function createListNode(item, options, index, indent, style) {
  * @param {Object} item - The item data to return on click
  */
 function attachClickHandler(node, item) {
-  node.addEventListener("click", (e) => {
-    e.stopPropagation();
-    Streamlit.setComponentValue(item);
-  });
+  // This function is now obsolete since we're attaching the click handler
+  // directly to the name span in createListNode
+  // We keep it for compatibility but it doesn't do anything
 }
 
 /**

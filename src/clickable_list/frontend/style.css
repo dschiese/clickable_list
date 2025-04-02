@@ -5,3 +5,27 @@ li, ul {
     margin: 0;
     padding: 0;
 }
+
+/* Handle collapse */
+
+.collapsible.collapsed > li, .collapsible.collapsed > ul {
+  display: none !important;
+}
+
+.collapsible > li {
+  display: block;
+}
+
+.collapsible {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.clickable-text:hover {
+  text-decoration: underline;
+}
+
+.hierarchy-symbol {
+  margin-right: 5px;
+  user-select: none;
+}
