@@ -15,7 +15,7 @@ function createListNode(item, options, index, indent, style) {
   // Determine if this should be a parent node (ul) or leaf node (li)
   const isParentNode = index < options.length - 1 && options[index + 1].level > item.level;
   const node = document.createElement(isParentNode ? "ul" : "li");
-  
+
   // Add collapsible class if node is a parent node
   if (isParentNode) {
     node.classList.add("collapsible");
@@ -41,11 +41,12 @@ function createListNode(item, options, index, indent, style) {
   
   // Determine hierarchy symbol for children
   let hierarchySymbol = "";
+  let isParentWasLastChild = false;
   if (item.level > 0) {
     // Check if this is the last item at this level within its parent
     let isLastChild = true;
     for (let i = index + 1; i < options.length; i++) {
-      if (options[i].level < item.level) {
+      if (options[i].level < item.level) { 
         // We've gone back up the hierarchy, so stop checking
         break;
       }
@@ -55,8 +56,8 @@ function createListNode(item, options, index, indent, style) {
         break;
       }
     }
-    
-    hierarchySymbol = isLastChild ? "┕ " : "┝ ";
+    hierarchySymbol += item.level > 1 ? "│".repeat(item.level - 1) : "" ;
+    hierarchySymbol += isLastChild ? "┕ " : "┝ ";
   }
   
   // Create non-clickable span for hierarchy symbol
@@ -112,11 +113,6 @@ function createListNode(item, options, index, indent, style) {
   
   contentContainer.appendChild(nameSpan);
   node.appendChild(contentContainer);
-
-  // Apply indentation for nested items
-  if (item.level > 0) {
-    node.style.marginLeft = `${indent}px`;
-  }
   
   // Apply custom style if provided
   if (style) {
