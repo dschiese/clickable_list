@@ -3,11 +3,114 @@
 let collapsedNodes = new Set();
 
 /**
+ * Determines if an item is the last child in its level
+ * @param {Array} options - The full options array
+ * @param {number} index - Current item index
+ * @param {number} level - Current item's level
+ * @returns {boolean} True if it's the last child at its level
+ */
+function isLastChild(options, index, level) {
+  for (let i = index + 1; i < options.length; i++) {
+    if (options[i].level < level) {
+      return true; // We've gone back up the hierarchy, so this is the last child
+    }
+    if (options[i].level === level) {
+      return false; // Found another item at the same level
+    }
+  }
+  return true; // Reached the end of the array
+}
+
+/**
+ * Determines which ancestors of an item are last children
+ * @param {Array} options - The full options array
+ * @param {number} index - Current item index
+ * @returns {Object} Map of levels to boolean (true if ancestor at that level is last child)
+ */
+function getAncestorMap(options, index) {
+  const ancestorMap = {};
+  const currentItem = options[index];
+  
+  // Find all ancestors
+  let lastLevel = currentItem.level;
+  let ancestorLevel = lastLevel - 1;
+  
+  // Work backwards through the array to find ancestors
+  for (let i = index - 1; i >= 0 && ancestorLevel >= 0; i--) {
+    const level = options[i].level;
+    
+    // If we find an item with a level equal to ancestorLevel, it's an ancestor
+    if (level === ancestorLevel) {
+      // Check if this ancestor is the last child at its level
+      let isLastChild = true;
+      for (let j = i + 1; j < options.length; j++) {
+        if (options[j].level < level) {
+          // We've gone back up the hierarchy
+          break;
+        }
+        if (options[j].level === level && j !== i) {
+          // Found another item at the same level
+          isLastChild = false;
+          break;
+        }
+      }
+      
+      // Store in map
+      ancestorMap[level] = isLastChild;
+      
+      // Move up to the next ancestor level
+      ancestorLevel--;
+    }
+  }
+  
+  return ancestorMap;
+}
+
+/**
+ * Generates the hierarchy symbol using box-drawing characters
+ * @param {Array} options - All options array
+ * @param {number} index - Current item index
+ * @param {number} level - Current item level
+ * @returns {string} The formatted hierarchy symbol
+ */
+function generateBoxDrawingSymbol(options, index, level) {
+  if (level === 0) return "";
+  
+  const ancestorMap = getAncestorMap(options, index);
+  let prefix = "";
+  
+  // Generate the prefix lines based on ancestors
+  for (let l = 1; l < level; l++) {
+    // If ancestor at this level is last child, use space, otherwise use vertical line
+    prefix += (ancestorMap[l] ? "  " : "│ ");
+  }
+  
+  // Determine if current item is last child
+  let isLastChild = true;
+  for (let i = index + 1; i < options.length; i++) {
+    if (options[i].level < level) {
+      // We've gone back up the hierarchy
+      break;
+    }
+    if (options[i].level === level) {
+      // Found another item at the same level
+      isLastChild = false;
+      break;
+    }
+  }
+  
+  // Add the connector symbol
+  prefix += isLastChild ? "└─ " : "├─ ";
+  
+  return prefix;
+}
+
+/**
  * Creates a list node (li or ul) based on item properties
  * @param {Object} item - The item dictionary 
  * @param {Array} options - All options array for context
  * @param {number} index - Current options index
- * @param {number} indent - Indentation in pixels
+ * @param {number} indent - Indentation in pixels (not used anymore)
  * @param {string} style - CSS style to apply
  * @returns {HTMLElement} The created DOM node
  */
@@ -19,106 +122,84 @@ function createListNode(item, options, index, indent, style) {
   // Add collapsible class if node is a parent node
   if (isParentNode) {
     node.classList.add("collapsible");
-    
+
     // Check if this node was previously collapsed
-    // Use a combination of id and name to create a unique identifier
     const nodeId = `${item.id || ''}-${item.name || ''}-${item.level}`;
     if (collapsedNodes.has(nodeId)) {
       node.classList.add("collapsed");
     }
   }
-  
+
   // Set id for the node
   node.id = item.id;
-  
+
   // Clear any existing content
   node.innerHTML = "";
-  
+
   // Create container for the node content
   const contentContainer = document.createElement("div");
   contentContainer.style.display = "flex";
   contentContainer.style.alignItems = "center";
-  
-  // Determine hierarchy symbol for children
-  let hierarchySymbol = "";
-  let isParentWasLastChild = false;
-  if (item.level > 0) {
-    // Check if this is the last item at this level within its parent
-    let isLastChild = true;
-    for (let i = index + 1; i < options.length; i++) {
-      if (options[i].level < item.level) { 
-        // We've gone back up the hierarchy, so stop checking
-        break;
-      }
-      
-      if (options[i].level === item.level) {
-        isLastChild = false;
-        break;
-      }
-    }
-    hierarchySymbol += item.level > 1 ? "│".repeat(item.level - 1) : "" ;
-    hierarchySymbol += isLastChild ? "┕ " : "┝ ";
-  }
-  
-  // Create non-clickable span for hierarchy symbol
+
+  // Generate hierarchy symbol for the item
+  const hierarchySymbol = generateBoxDrawingSymbol(options, index, item.level);
+
+  // Create span for hierarchy symbol
   if (hierarchySymbol) {
     const symbolSpan = document.createElement("span");
     symbolSpan.className = "hierarchy-symbol";
-    
-    // Add collapse indicator for parent nodes
+    symbolSpan.textContent = hierarchySymbol;
+    symbolSpan.style.whiteSpace = "pre"; // Preserve whitespace
+    symbolSpan.style.fontFamily = "monospace"; // Use monospace font for symbols
+
     if (isParentNode) {
-      const isCollapsed = collapsedNodes.has(`${item.id || ''}-${item.name || ''}-${item.level}`);
-      symbolSpan.textContent = hierarchySymbol;
       symbolSpan.style.cursor = "pointer";
-      
+
       // Add click handler for collapsing
       symbolSpan.addEventListener("click", (e) => {
         e.stopPropagation();
         const nodeId = `${item.id || ''}-${item.name || ''}-${item.level}`;
-        
+
         if (node.classList.contains("collapsed")) {
           // Uncollapse
           node.classList.remove("collapsed");
           collapsedNodes.delete(nodeId);
-          symbolSpan.textContent = hierarchySymbol;
         } else {
           // Collapse
           node.classList.add("collapsed");
           collapsedNodes.add(nodeId);
-          symbolSpan.textContent = hierarchySymbol;
         }
       });
     } else {
-      symbolSpan.textContent = hierarchySymbol;
+      symbolSpan.style.pointerEvents = "none";
     }
-    
+
     contentContainer.appendChild(symbolSpan);
   }
-  
+
   // Create clickable span for the item name
   const nameSpan = document.createElement("span");
   nameSpan.textContent = item.name;
   nameSpan.classList.add("clickable-text");
-  
+
   // Attach the click handler to just the name span
   nameSpan.addEventListener("click", (e) => {
     e.stopPropagation();
-    // When clicking on the name, preserve the current state of collapsed nodes
     const state = {
       ...item,
-      collapsedState: Array.from(collapsedNodes)
+      collapsedState: Array.from(collapsedNodes),
     };
     Streamlit.setComponentValue(state);
   });
-  
+
   contentContainer.appendChild(nameSpan);
   node.appendChild(contentContainer);
-  
+
   // Apply custom style if provided
   if (style) {
     node.style.cssText += style;
   }
-  
+
   return node;
 }
 
